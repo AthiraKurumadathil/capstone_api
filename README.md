@@ -81,6 +81,7 @@ Interactive API documentation is available at `http://localhost:8000/docs`
 - ODBC Driver 17 for SQL Server (install from Microsoft)
 
 ## Project Structure
+# Added Activity
 
 ```
 capstone_api/
