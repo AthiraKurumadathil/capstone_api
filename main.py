@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from organizations import router as organizations_router
 from activities import router as activities_router
 from trainers import router as trainers_router
@@ -16,6 +18,11 @@ from payments import router as payments_router
 from roles import router as roles_router
 from users import router as users_router
 from utils.auth import JWTMiddleware
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Organization API", version="1.0.0")
 
@@ -60,6 +67,31 @@ app.add_middleware(
 
 # ============== JWT AUTHENTICATION MIDDLEWARE ==============
 app.add_middleware(JWTMiddleware)
+
+# ============== GLOBAL EXCEPTION HANDLERS ==============
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors from request body/parameters"""
+    logger.error(f"Validation error on {request.url.path}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": exc.errors()
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all unhandled exceptions"""
+    logger.error(f"Unhandled exception on {request.url.path}: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "message": str(exc) if hasattr(exc, 'detail') else "An unexpected error occurred"
+        }
+    )
 
 # Include routers
 app.include_router(organizations_router)
