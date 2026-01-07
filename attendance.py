@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.attendancemodel import Attendance, AttendanceCreate, AttendanceUpdate
 from services.attendancecrud import AttendanceCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_attendance(attendance: AttendanceCreate):
+async def create_attendance(attendance: AttendanceCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new attendance record.
     
@@ -25,7 +26,7 @@ async def create_attendance(attendance: AttendanceCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/session/{session_id}", response_model=List[Attendance])
-async def get_attendance_by_session(session_id: int):
+async def get_attendance_by_session(session_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all attendance records for a specific session.
     """
@@ -36,7 +37,7 @@ async def get_attendance_by_session(session_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/enrollment/{enrollment_id}", response_model=List[Attendance])
-async def get_attendance_by_enrollment(enrollment_id: int):
+async def get_attendance_by_enrollment(enrollment_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all attendance records for a specific enrollment.
     """
@@ -47,7 +48,7 @@ async def get_attendance_by_enrollment(enrollment_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Attendance])
-async def get_all_attendance():
+async def get_all_attendance(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all attendance records.
     """
@@ -58,7 +59,7 @@ async def get_all_attendance():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{attendance_id}", response_model=Attendance)
-async def get_attendance(attendance_id: int):
+async def get_attendance(attendance_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single attendance record by ID.
     """
@@ -74,7 +75,7 @@ async def get_attendance(attendance_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{attendance_id}", response_model=dict)
-async def update_attendance(attendance_id: int, attendance: AttendanceUpdate):
+async def update_attendance(attendance_id: int, attendance: AttendanceUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing attendance record.
     
@@ -91,7 +92,7 @@ async def update_attendance(attendance_id: int, attendance: AttendanceUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{attendance_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_attendance(attendance_id: int):
+async def delete_attendance(attendance_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete an attendance record by ID.
     """

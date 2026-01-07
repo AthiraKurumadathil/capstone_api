@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.invoicemodel import Invoice, InvoiceCreate, InvoiceUpdate
 from services.invoicecrud import InvoiceCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_invoice(invoice: InvoiceCreate):
+async def create_invoice(invoice: InvoiceCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new invoice.
     
@@ -26,7 +27,7 @@ async def create_invoice(invoice: InvoiceCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[Invoice])
-async def get_invoices_by_organization(org_id: int):
+async def get_invoices_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all invoices for a specific organization.
     """
@@ -37,7 +38,7 @@ async def get_invoices_by_organization(org_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/enrollment/{enrollment_id}", response_model=List[Invoice])
-async def get_invoices_by_enrollment(enrollment_id: int):
+async def get_invoices_by_enrollment(enrollment_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all invoices for a specific enrollment.
     """
@@ -48,7 +49,7 @@ async def get_invoices_by_enrollment(enrollment_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Invoice])
-async def get_all_invoices():
+async def get_all_invoices(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all invoices.
     """
@@ -59,7 +60,7 @@ async def get_all_invoices():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{invoice_id}", response_model=Invoice)
-async def get_invoice(invoice_id: int):
+async def get_invoice(invoice_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single invoice by ID.
     """
@@ -75,7 +76,7 @@ async def get_invoice(invoice_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{invoice_id}", response_model=dict)
-async def update_invoice(invoice_id: int, invoice: InvoiceUpdate):
+async def update_invoice(invoice_id: int, invoice: InvoiceUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing invoice.
     
@@ -92,7 +93,7 @@ async def update_invoice(invoice_id: int, invoice: InvoiceUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{invoice_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_invoice(invoice_id: int):
+async def delete_invoice(invoice_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete an invoice by ID.
     """

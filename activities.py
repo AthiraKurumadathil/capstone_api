@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.activitymodel import Activity, ActivityCreate, ActivityUpdate
 from services.activitycrud import ActivityCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_activity(activity: ActivityCreate):
+async def create_activity(activity: ActivityCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new activity.
     
@@ -26,7 +27,7 @@ async def create_activity(activity: ActivityCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/{activity_id}", response_model=Activity)
-async def get_activity(activity_id: int):
+async def get_activity(activity_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single activity by ID.
     """
@@ -41,7 +42,7 @@ async def get_activity(activity_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Activity])
-async def get_all_activities():
+async def get_all_activities(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all activities.
     """
@@ -52,7 +53,7 @@ async def get_all_activities():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/organization/{org_id}", response_model=List[Activity])
-async def get_activities_by_organization(org_id: int):
+async def get_activities_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all activities for a specific organization.
     """
@@ -64,7 +65,7 @@ async def get_activities_by_organization(org_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{activity_id}", response_model=dict)
-async def update_activity(activity_id: int, activity: ActivityUpdate):
+async def update_activity(activity_id: int, activity: ActivityUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing activity.
     
@@ -81,7 +82,7 @@ async def update_activity(activity_id: int, activity: ActivityUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{activity_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_activity(activity_id: int):
+async def delete_activity(activity_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete an activity by ID.
     """

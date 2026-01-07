@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.categorymodel import Category, CategoryCreate, CategoryUpdate
 from services.categorycrud import CategoryCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_category(category: CategoryCreate):
+async def create_category(category: CategoryCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new category.
     
@@ -22,7 +23,7 @@ async def create_category(category: CategoryCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("", response_model=List[Category])
-async def get_all_categories():
+async def get_all_categories(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all categories.
     """
@@ -33,7 +34,7 @@ async def get_all_categories():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{category_id}", response_model=Category)
-async def get_category(category_id: int):
+async def get_category(category_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single category by ID.
     """
@@ -49,7 +50,7 @@ async def get_category(category_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{category_id}", response_model=dict)
-async def update_category(category_id: int, category: CategoryUpdate):
+async def update_category(category_id: int, category: CategoryUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing category.
     
@@ -66,7 +67,7 @@ async def update_category(category_id: int, category: CategoryUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{category_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_category(category_id: int):
+async def delete_category(category_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete a category by ID.
     """

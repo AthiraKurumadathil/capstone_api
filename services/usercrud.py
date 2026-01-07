@@ -1,6 +1,7 @@
 from utils.database import get_db_connection
 from model.usermodel import UserCreate, UserUpdate
 from datetime import datetime
+import hashlib
 
 class UserCRUD:
     """CRUD operations for Users table"""
@@ -18,6 +19,11 @@ class UserCRUD:
             if cursor.fetchone():
                 raise Exception(f"Email '{user_data.email}' is already registered")
             
+            # Hash the password if provided
+            hashed_password = None
+            if user_data.password_hash:
+                hashed_password = hashlib.sha256(user_data.password_hash.encode()).hexdigest()
+            
             # Insert the user
             query = """
             INSERT INTO [dbo].[Users] (org_id, role_id, email, phone, password_hash, active, created_at)
@@ -28,7 +34,7 @@ class UserCRUD:
                 user_data.role_id,
                 user_data.email,
                 user_data.phone,
-                user_data.password_hash,
+                hashed_password,
                 user_data.active,
                 datetime.now()
             ))
@@ -271,6 +277,46 @@ class UserCRUD:
             return {"message": "Last login updated successfully"}
         except Exception as e:
             raise Exception(f"Error updating last login: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
+    def verify_user_credentials(email: str, password: str):
+        """Verify user email and password. Returns user data if valid, None otherwise."""
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT user_id, org_id, role_id, email, phone, password_hash, active, created_at, last_login_at
+            FROM [dbo].[Users]
+            WHERE email = ?
+            """
+            cursor.execute(query, (email,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return None
+            
+            # Hash the provided password using SHA256
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            
+            # Compare hashes
+            if row[5] == hashed_password:  # row[5] is password_hash
+                return {
+                    "user_id": row[0],
+                    "org_id": row[1],
+                    "role_id": row[2],
+                    "email": row[3],
+                    "phone": row[4],
+                    "active": row[6],
+                    "created_at": row[7],
+                    "last_login_at": row[8]
+                }
+            return None
+        except Exception as e:
+            raise Exception(f"Error verifying user credentials: {str(e)}")
         finally:
             cursor.close()
             conn.close()

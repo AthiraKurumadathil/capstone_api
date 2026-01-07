@@ -1,15 +1,37 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
+from pydantic import BaseModel, Field
 from model.usermodel import User, UserCreate, UserUpdate
 from services.usercrud import UserCRUD
+from utils.auth import verify_jwt_token
+import jwt
+from datetime import datetime, timedelta
+from typing import Optional
+
+# Configuration
+SECRET_KEY = "your-secret-key-change-this-in-production"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# ============== REQUEST/RESPONSE MODELS ==============
+class LoginRequest(BaseModel):
+    email: str = Field(..., min_length=1, max_length=150)
+    password: str = Field(..., min_length=1)
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int
+    user_id: int
+    email: str
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreate):
+async def create_user(user: UserCreate, current_user: dict = Depends(verify_jwt_token)):
     """
-    Create a new user.
+    Create a new user. Requires JWT authentication.
     
     - **org_id**: Organization ID (required)
     - **role_id**: Role ID (required)
@@ -26,7 +48,7 @@ async def create_user(user: UserCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[User])
-async def get_users_by_organization(org_id: int):
+async def get_users_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all users for a specific organization.
     """
@@ -37,7 +59,7 @@ async def get_users_by_organization(org_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/email/{email}", response_model=User)
-async def get_user_by_email(email: str):
+async def get_user_by_email(email: str, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a user by email address.
     """
@@ -52,7 +74,7 @@ async def get_user_by_email(email: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[User])
-async def get_all_users():
+async def get_all_users(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all users.
     """
@@ -63,7 +85,7 @@ async def get_all_users():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{user_id}", response_model=User)
-async def get_user(user_id: int):
+async def get_user(user_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single user by ID.
     """
@@ -79,7 +101,7 @@ async def get_user(user_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{user_id}", response_model=dict)
-async def update_user(user_id: int, user: UserUpdate):
+async def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing user.
     
@@ -96,7 +118,7 @@ async def update_user(user_id: int, user: UserUpdate):
 
 # ============== UPDATE LAST LOGIN ==============
 @router.put("/{user_id}/last-login", response_model=dict)
-async def update_last_login(user_id: int):
+async def update_last_login(user_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Update the last login timestamp for a user.
     """
@@ -110,7 +132,7 @@ async def update_last_login(user_id: int):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{user_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_user(user_id: int):
+async def delete_user(user_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete a user by ID.
     """
@@ -121,3 +143,51 @@ async def delete_user(user_id: int):
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============== AUTHENTICATION ENDPOINT ==============
+@router.post("/authenticate/login", response_model=TokenResponse)
+async def authenticate_user(login_data: LoginRequest):
+    """
+    Authenticate user with email and password. Returns JWT token if credentials are valid.
+    
+    - **email**: User email address (required)
+    - **password**: User password in plain text (will be hashed and compared with SHA256) (required)
+    """
+    try:
+        # Verify credentials
+        user = UserCRUD.verify_user_credentials(login_data.email, login_data.password)
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        if not user['active']:
+            raise HTTPException(status_code=403, detail="User account is inactive")
+        
+        # Create JWT token
+        expiration_time = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        payload = {
+            "user_id": user['user_id'],
+            "email": user['email'],
+            "org_id": user['org_id'],
+            "role_id": user['role_id'],
+            "exp": expiration_time,
+            "iat": datetime.utcnow()
+        }
+        
+        access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        
+        # Update last login timestamp
+        UserCRUD.update_last_login(user['user_id'])
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # in seconds
+            "user_id": user['user_id'],
+            "email": user['email']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
+

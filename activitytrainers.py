@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.activitytrainermodel import ActivityTrainer, ActivityTrainerCreate, ActivityTrainerUpdate
 from services.activitytrainercrud import ActivityTrainerCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/activitytrainers", tags=["activitytrainers"])
 
@@ -24,7 +25,7 @@ async def create_activity_trainer(activity_trainer: ActivityTrainerCreate):
 # ============== GET ENDPOINTS ==============
 # Note: Specific routes must be defined before generic parameterized routes
 @router.get("/activity/{activity_id}", response_model=List[ActivityTrainer])
-async def get_trainers_by_activity(activity_id: int):
+async def get_trainers_by_activity(activity_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all trainers assigned to a specific activity.
     """
@@ -35,7 +36,7 @@ async def get_trainers_by_activity(activity_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/trainer/{trainer_id}", response_model=List[ActivityTrainer])
-async def get_activities_by_trainer(trainer_id: int):
+async def get_activities_by_trainer(trainer_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all activities assigned to a specific trainer.
     """
@@ -46,7 +47,7 @@ async def get_activities_by_trainer(trainer_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[ActivityTrainer])
-async def get_all_activity_trainers():
+async def get_all_activity_trainers(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all activity-trainer relationships.
     """
@@ -57,7 +58,7 @@ async def get_all_activity_trainers():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{activity_id}/{trainer_id}", response_model=ActivityTrainer)
-async def get_activity_trainer(activity_id: int, trainer_id: int):
+async def get_activity_trainer(activity_id: int, trainer_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a specific activity-trainer relationship.
     """
@@ -73,7 +74,7 @@ async def get_activity_trainer(activity_id: int, trainer_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{activity_id}/{trainer_id}", response_model=dict)
-async def update_activity_trainer(activity_id: int, trainer_id: int, activity_trainer: ActivityTrainerUpdate):
+async def update_activity_trainer(activity_id: int, trainer_id: int, activity_trainer: ActivityTrainerUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing activity-trainer relationship.
     
@@ -91,7 +92,7 @@ async def update_activity_trainer(activity_id: int, trainer_id: int, activity_tr
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{activity_id}/{trainer_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_activity_trainer(activity_id: int, trainer_id: int):
+async def delete_activity_trainer(activity_id: int, trainer_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete an activity-trainer relationship.
     """

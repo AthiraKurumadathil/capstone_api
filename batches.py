@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.batchmodel import Batch, BatchCreate, BatchUpdate
 from services.batchcrud import BatchCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_batch(batch: BatchCreate):
+async def create_batch(batch: BatchCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new batch.
     
@@ -29,7 +30,7 @@ async def create_batch(batch: BatchCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[Batch])
-async def get_batches_by_organization(org_id: int):
+async def get_batches_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all batches for a specific organization.
     """
@@ -51,7 +52,7 @@ async def get_batches_by_activity(activity_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Batch])
-async def get_all_batches():
+async def get_all_batches(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all batches.
     """
@@ -62,7 +63,7 @@ async def get_all_batches():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{batch_id}", response_model=Batch)
-async def get_batch(batch_id: int):
+async def get_batch(batch_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single batch by ID.
     """
@@ -78,7 +79,7 @@ async def get_batch(batch_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{batch_id}", response_model=dict)
-async def update_batch(batch_id: int, batch: BatchUpdate):
+async def update_batch(batch_id: int, batch: BatchUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing batch.
     
@@ -95,7 +96,7 @@ async def update_batch(batch_id: int, batch: BatchUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{batch_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_batch(batch_id: int):
+async def delete_batch(batch_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete a batch by ID.
     """

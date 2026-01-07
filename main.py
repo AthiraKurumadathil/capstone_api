@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from organizations import router as organizations_router
 from activities import router as activities_router
 from trainers import router as trainers_router
@@ -13,8 +14,18 @@ from invoices import router as invoices_router
 from payments import router as payments_router
 from roles import router as roles_router
 from users import router as users_router
+from utils.auth import verify_jwt_token
 
 app = FastAPI(title="Organization API", version="1.0.0")
+
+# ============== CORS MIDDLEWARE ==============
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(organizations_router)
@@ -37,6 +48,20 @@ app.include_router(users_router)
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+# ============== PROTECTED ENDPOINT (requires JWT token) ==============
+@app.get("/protected/profile")
+async def get_profile(current_user: dict = Depends(verify_jwt_token)):
+    """
+    Protected endpoint - requires valid JWT token in Authorization header.
+    Example: Authorization: Bearer <your_jwt_token>
+    """
+    return {
+        "message": "Access granted",
+        "user_id": current_user["user_id"],
+        "email": current_user["email"],
+        "token_payload": current_user["payload"]
+    }
 
 if __name__ == "__main__":
     import uvicorn

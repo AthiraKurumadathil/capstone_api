@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from model.rolemodel import Role, RoleCreate, RoleUpdate
 from services.rolecrud import RoleCRUD
+from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_role(role: RoleCreate):
+async def create_role(role: RoleCreate, current_user: dict = Depends(verify_jwt_token)):
     """
     Create a new role.
     
@@ -22,7 +23,7 @@ async def create_role(role: RoleCreate):
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[Role])
-async def get_roles_by_organization(org_id: int):
+async def get_roles_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all roles for a specific organization.
     """
@@ -33,7 +34,7 @@ async def get_roles_by_organization(org_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Role])
-async def get_all_roles():
+async def get_all_roles(current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve all roles.
     """
@@ -44,7 +45,7 @@ async def get_all_roles():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{role_id}", response_model=Role)
-async def get_role(role_id: int):
+async def get_role(role_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Retrieve a single role by ID.
     """
@@ -60,7 +61,7 @@ async def get_role(role_id: int):
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{role_id}", response_model=dict)
-async def update_role(role_id: int, role: RoleUpdate):
+async def update_role(role_id: int, role: RoleUpdate, current_user: dict = Depends(verify_jwt_token)):
     """
     Update an existing role.
     
@@ -77,7 +78,7 @@ async def update_role(role_id: int, role: RoleUpdate):
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{role_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_role(role_id: int):
+async def delete_role(role_id: int, current_user: dict = Depends(verify_jwt_token)):
     """
     Delete a role by ID.
     """
