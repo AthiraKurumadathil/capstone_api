@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.batchsessionmodel import BatchSession, BatchSessionCreate, BatchSessionUpdate
 from services.batchsessioncrud import BatchSessionCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/batchsessions", tags=["batchsessions"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_batch_session(session: BatchSessionCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_batch_session(session: BatchSessionCreate):
     """
     Create a new batch session.
     
@@ -27,7 +26,7 @@ async def create_batch_session(session: BatchSessionCreate, current_user: dict =
 
 # ============== GET ENDPOINTS ==============
 @router.get("/batch/{batch_id}", response_model=List[BatchSession])
-async def get_sessions_by_batch(batch_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_sessions_by_batch(batch_id: int):
     """
     Retrieve all sessions for a specific batch.
     """
@@ -38,7 +37,7 @@ async def get_sessions_by_batch(batch_id: int, current_user: dict = Depends(veri
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[BatchSession])
-async def get_all_batch_sessions(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_batch_sessions():
     """
     Retrieve all batch sessions.
     """
@@ -49,7 +48,7 @@ async def get_all_batch_sessions(current_user: dict = Depends(verify_jwt_token))
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{session_id}", response_model=BatchSession)
-async def get_batch_session(session_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_batch_session(session_id: int):
     """
     Retrieve a single batch session by ID.
     """
@@ -65,7 +64,7 @@ async def get_batch_session(session_id: int, current_user: dict = Depends(verify
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{session_id}", response_model=dict)
-async def update_batch_session(session_id: int, session: BatchSessionUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_batch_session(session_id: int, session: BatchSessionUpdate):
     """
     Update an existing batch session.
     
@@ -82,7 +81,7 @@ async def update_batch_session(session_id: int, session: BatchSessionUpdate, cur
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{session_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_batch_session(session_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_batch_session(session_id: int):
     """
     Delete a batch session by ID.
     """

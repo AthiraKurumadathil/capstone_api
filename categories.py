@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.categorymodel import Category, CategoryCreate, CategoryUpdate
 from services.categorycrud import CategoryCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_category(category: CategoryCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_category(category: CategoryCreate):
     """
     Create a new category.
     
@@ -23,7 +22,7 @@ async def create_category(category: CategoryCreate, current_user: dict = Depends
 
 # ============== GET ENDPOINTS ==============
 @router.get("", response_model=List[Category])
-async def get_all_categories(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_categories():
     """
     Retrieve all categories.
     """
@@ -34,7 +33,7 @@ async def get_all_categories(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{category_id}", response_model=Category)
-async def get_category(category_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_category(category_id: int):
     """
     Retrieve a single category by ID.
     """
@@ -50,7 +49,7 @@ async def get_category(category_id: int, current_user: dict = Depends(verify_jwt
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{category_id}", response_model=dict)
-async def update_category(category_id: int, category: CategoryUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_category(category_id: int, category: CategoryUpdate):
     """
     Update an existing category.
     
@@ -67,7 +66,7 @@ async def update_category(category_id: int, category: CategoryUpdate, current_us
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{category_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_category(category_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_category(category_id: int):
     """
     Delete a category by ID.
     """

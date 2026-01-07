@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.feeplanmodel import FeePlan, FeePlanCreate, FeePlanUpdate
 from services.feeplancrud import FeePlanCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/feeplans", tags=["feeplans"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_fee_plan(fee_plan: FeePlanCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_fee_plan(fee_plan: FeePlanCreate):
     """
     Create a new fee plan.
     
@@ -27,7 +26,7 @@ async def create_fee_plan(fee_plan: FeePlanCreate, current_user: dict = Depends(
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[FeePlan])
-async def get_fee_plans_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_fee_plans_by_organization(org_id: int):
     """
     Retrieve all fee plans for a specific organization.
     """
@@ -38,7 +37,7 @@ async def get_fee_plans_by_organization(org_id: int, current_user: dict = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[FeePlan])
-async def get_all_fee_plans(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_fee_plans():
     """
     Retrieve all fee plans.
     """
@@ -49,7 +48,7 @@ async def get_all_fee_plans(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{fee_plan_id}", response_model=FeePlan)
-async def get_fee_plan(fee_plan_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_fee_plan(fee_plan_id: int):
     """
     Retrieve a single fee plan by ID.
     """
@@ -65,7 +64,7 @@ async def get_fee_plan(fee_plan_id: int, current_user: dict = Depends(verify_jwt
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{fee_plan_id}", response_model=dict)
-async def update_fee_plan(fee_plan_id: int, fee_plan: FeePlanUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_fee_plan(fee_plan_id: int, fee_plan: FeePlanUpdate):
     """
     Update an existing fee plan.
     
@@ -82,7 +81,7 @@ async def update_fee_plan(fee_plan_id: int, fee_plan: FeePlanUpdate, current_use
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{fee_plan_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_fee_plan(fee_plan_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_fee_plan(fee_plan_id: int):
     """
     Delete a fee plan by ID.
     """

@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from organizations import router as organizations_router
 from activities import router as activities_router
 from trainers import router as trainers_router
@@ -14,9 +15,39 @@ from invoices import router as invoices_router
 from payments import router as payments_router
 from roles import router as roles_router
 from users import router as users_router
-from utils.auth import verify_jwt_token
+from utils.auth import JWTMiddleware
 
 app = FastAPI(title="Organization API", version="1.0.0")
+
+# ============== OPENAPI SECURITY SCHEME ==============
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title="Organization API",
+        version="1.0.0",
+        description="Activity Management and Billing System API",
+        routes=app.routes,
+    )
+    
+    # Add security scheme for JWT Bearer token
+    openapi_schema["components"]["securitySchemes"] = {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter JWT token obtained from /users/authenticate/login endpoint"
+        }
+    }
+    
+    # Add security requirement to all endpoints (except public ones)
+    openapi_schema["security"] = [{"Bearer": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # ============== CORS MIDDLEWARE ==============
 app.add_middleware(
@@ -26,6 +57,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ============== JWT AUTHENTICATION MIDDLEWARE ==============
+app.add_middleware(JWTMiddleware)
 
 # Include routers
 app.include_router(organizations_router)
@@ -51,15 +85,15 @@ async def health_check():
 
 # ============== PROTECTED ENDPOINT (requires JWT token) ==============
 @app.get("/protected/profile")
-async def get_profile(current_user: dict = Depends(verify_jwt_token)):
+async def get_profile():
     """
     Protected endpoint - requires valid JWT token in Authorization header.
     Example: Authorization: Bearer <your_jwt_token>
     """
     return {
         "message": "Access granted",
-        "user_id": current_user["user_id"],
-        "email": current_user["email"],
+        "user_id": "user_id_from_token",
+        "email": "email_from_token",
         "token_payload": current_user["payload"]
     }
 

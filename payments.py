@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.paymentmodel import Payment, PaymentCreate, PaymentUpdate
 from services.paymentcrud import PaymentCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_payment(payment: PaymentCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_payment(payment: PaymentCreate):
     """
     Create a new payment.
     
@@ -28,7 +27,7 @@ async def create_payment(payment: PaymentCreate, current_user: dict = Depends(ve
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[Payment])
-async def get_payments_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_payments_by_organization(org_id: int):
     """
     Retrieve all payments for a specific organization.
     """
@@ -39,7 +38,7 @@ async def get_payments_by_organization(org_id: int, current_user: dict = Depends
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/invoice/{invoice_id}", response_model=List[Payment])
-async def get_payments_by_invoice(invoice_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_payments_by_invoice(invoice_id: int):
     """
     Retrieve all payments for a specific invoice.
     """
@@ -50,7 +49,7 @@ async def get_payments_by_invoice(invoice_id: int, current_user: dict = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Payment])
-async def get_all_payments(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_payments():
     """
     Retrieve all payments.
     """
@@ -61,7 +60,7 @@ async def get_all_payments(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{payment_id}", response_model=Payment)
-async def get_payment(payment_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_payment(payment_id: int):
     """
     Retrieve a single payment by ID.
     """
@@ -77,7 +76,7 @@ async def get_payment(payment_id: int, current_user: dict = Depends(verify_jwt_t
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{payment_id}", response_model=dict)
-async def update_payment(payment_id: int, payment: PaymentUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_payment(payment_id: int, payment: PaymentUpdate):
     """
     Update an existing payment.
     
@@ -94,7 +93,7 @@ async def update_payment(payment_id: int, payment: PaymentUpdate, current_user: 
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{payment_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_payment(payment_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_payment(payment_id: int):
     """
     Delete a payment by ID.
     """

@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from pydantic import BaseModel, Field
 from model.usermodel import User, UserCreate, UserUpdate
 from services.usercrud import UserCRUD
-from utils.auth import verify_jwt_token
 import jwt
 from datetime import datetime, timedelta
 from typing import Optional
@@ -29,7 +28,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_user(user: UserCreate):
     """
     Create a new user. Requires JWT authentication.
     
@@ -48,7 +47,7 @@ async def create_user(user: UserCreate, current_user: dict = Depends(verify_jwt_
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[User])
-async def get_users_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_users_by_organization(org_id: int):
     """
     Retrieve all users for a specific organization.
     """
@@ -59,7 +58,7 @@ async def get_users_by_organization(org_id: int, current_user: dict = Depends(ve
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/email/{email}", response_model=User)
-async def get_user_by_email(email: str, current_user: dict = Depends(verify_jwt_token)):
+async def get_user_by_email(email: str):
     """
     Retrieve a user by email address.
     """
@@ -74,7 +73,7 @@ async def get_user_by_email(email: str, current_user: dict = Depends(verify_jwt_
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[User])
-async def get_all_users(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_users():
     """
     Retrieve all users.
     """
@@ -85,7 +84,7 @@ async def get_all_users(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{user_id}", response_model=User)
-async def get_user(user_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_user(user_id: int):
     """
     Retrieve a single user by ID.
     """
@@ -101,7 +100,7 @@ async def get_user(user_id: int, current_user: dict = Depends(verify_jwt_token))
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{user_id}", response_model=dict)
-async def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_user(user_id: int, user: UserUpdate):
     """
     Update an existing user.
     
@@ -118,7 +117,7 @@ async def update_user(user_id: int, user: UserUpdate, current_user: dict = Depen
 
 # ============== UPDATE LAST LOGIN ==============
 @router.put("/{user_id}/last-login", response_model=dict)
-async def update_last_login(user_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def update_last_login(user_id: int):
     """
     Update the last login timestamp for a user.
     """
@@ -132,7 +131,7 @@ async def update_last_login(user_id: int, current_user: dict = Depends(verify_jw
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{user_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_user(user_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_user(user_id: int):
     """
     Delete a user by ID.
     """

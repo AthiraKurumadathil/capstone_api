@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.studentmodel import Student, StudentCreate, StudentUpdate
 from services.studentcrud import StudentCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/students", tags=["students"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_student(student: StudentCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_student(student: StudentCreate):
     """
     Create a new student.
     
@@ -30,7 +29,7 @@ async def create_student(student: StudentCreate, current_user: dict = Depends(ve
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[Student])
-async def get_students_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_students_by_organization(org_id: int):
     """
     Retrieve all students for a specific organization.
     """
@@ -41,7 +40,7 @@ async def get_students_by_organization(org_id: int, current_user: dict = Depends
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Student])
-async def get_all_students(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_students():
     """
     Retrieve all students.
     """
@@ -52,7 +51,7 @@ async def get_all_students(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{student_id}", response_model=Student)
-async def get_student(student_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_student(student_id: int):
     """
     Retrieve a single student by ID.
     """
@@ -68,7 +67,7 @@ async def get_student(student_id: int, current_user: dict = Depends(verify_jwt_t
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{student_id}", response_model=dict)
-async def update_student(student_id: int, student: StudentUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_student(student_id: int, student: StudentUpdate):
     """
     Update an existing student.
     
@@ -85,7 +84,7 @@ async def update_student(student_id: int, student: StudentUpdate, current_user: 
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{student_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_student(student_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_student(student_id: int):
     """
     Delete a student by ID.
     """

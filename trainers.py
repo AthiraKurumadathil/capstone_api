@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 from model.trainermodel import Trainer, TrainerCreate, TrainerUpdate
 from services.trainercrud import TrainerCRUD
-from utils.auth import verify_jwt_token
 
 router = APIRouter(prefix="/trainers", tags=["trainers"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_trainer(trainer: TrainerCreate, current_user: dict = Depends(verify_jwt_token)):
+async def create_trainer(trainer: TrainerCreate):
     """
     Create a new trainer.
     
@@ -28,7 +27,7 @@ async def create_trainer(trainer: TrainerCreate, current_user: dict = Depends(ve
 
 # ============== GET ENDPOINTS ==============
 @router.get("/{trainer_id}", response_model=Trainer)
-async def get_trainer(trainer_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_trainer(trainer_id: int):
     """
     Retrieve a single trainer by ID.
     """
@@ -43,7 +42,7 @@ async def get_trainer(trainer_id: int, current_user: dict = Depends(verify_jwt_t
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("", response_model=List[Trainer])
-async def get_all_trainers(current_user: dict = Depends(verify_jwt_token)):
+async def get_all_trainers():
     """
     Retrieve all trainers.
     """
@@ -54,7 +53,7 @@ async def get_all_trainers(current_user: dict = Depends(verify_jwt_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/organization/{org_id}", response_model=List[Trainer])
-async def get_trainers_by_organization(org_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def get_trainers_by_organization(org_id: int):
     """
     Retrieve all trainers for a specific organization.
     """
@@ -66,7 +65,7 @@ async def get_trainers_by_organization(org_id: int, current_user: dict = Depends
 
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{trainer_id}", response_model=dict)
-async def update_trainer(trainer_id: int, trainer: TrainerUpdate, current_user: dict = Depends(verify_jwt_token)):
+async def update_trainer(trainer_id: int, trainer: TrainerUpdate):
     """
     Update an existing trainer.
     
@@ -83,7 +82,7 @@ async def update_trainer(trainer_id: int, trainer: TrainerUpdate, current_user: 
 
 # ============== DELETE ENDPOINT ==============
 @router.delete("/{trainer_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_trainer(trainer_id: int, current_user: dict = Depends(verify_jwt_token)):
+async def delete_trainer(trainer_id: int):
     """
     Delete a trainer by ID.
     """
