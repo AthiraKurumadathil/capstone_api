@@ -1,13 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.exceptions import RequestValidationError
 from organizations import router as organizations_router
 from activities import router as activities_router
 from trainers import router as trainers_router
 from activitytrainers import router as activity_trainers_router
 from attendance import router as attendance_router
+from enrollments import router as enrollments_router
 from students import router as students_router
 from batches import router as batches_router
 from batchsessions import router as batch_sessions_router
@@ -59,11 +60,19 @@ app.openapi = custom_openapi
 # ============== CORS MIDDLEWARE ==============
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],   
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ============== PREFLIGHT REQUESTS MIDDLEWARE ==============
+@app.middleware("http")
+async def preflight_middleware(request: Request, call_next):
+    """Handle CORS preflight requests (OPTIONS) - skip JWT verification"""
+    if request.method == "OPTIONS":
+        return Response(status_code=200)
+    return await call_next(request)
 
 # ============== JWT AUTHENTICATION MIDDLEWARE ==============
 app.add_middleware(JWTMiddleware)
@@ -99,6 +108,7 @@ app.include_router(activities_router)
 app.include_router(trainers_router)
 app.include_router(activity_trainers_router)
 app.include_router(attendance_router)
+app.include_router(enrollments_router)
 app.include_router(students_router)
 app.include_router(batches_router)
 app.include_router(batch_sessions_router)

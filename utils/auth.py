@@ -25,6 +25,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
     """Middleware to verify JWT token for all protected routes"""
     
     async def dispatch(self, request: Request, call_next):
+        # Skip authentication for preflight requests (CORS)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         # Skip authentication for public routes
         if request.url.path in PUBLIC_ROUTES or request.url.path.startswith("/api/docs"):
             return await call_next(request)
