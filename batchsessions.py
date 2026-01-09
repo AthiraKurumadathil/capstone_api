@@ -19,7 +19,7 @@ async def create_batch_session(session: BatchSessionCreate):
     - **notes**: Session notes (optional)
     """
     try:
-        result = BatchSessionCRUD.create_batch_session(batch_session)
+        result = BatchSessionCRUD.create_batch_session(session)
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -72,7 +72,7 @@ async def update_batch_session(session_id: int, session: BatchSessionUpdate):
     - All other fields are optional
     """
     try:
-        result = BatchSessionCRUD.update_batch_session(session_id, batch_session)
+        result = BatchSessionCRUD.update_batch_session(session_id, session)
         return result
     except Exception as e:
         if "not found" in str(e).lower():
