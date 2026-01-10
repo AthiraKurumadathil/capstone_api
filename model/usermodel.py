@@ -10,6 +10,11 @@ class UserBase(BaseModel):
     active: bool
 
 class UserCreate(UserBase):
+    """
+    Create a new user.
+    Note: password_hash is NOT required - a random password will be auto-generated,
+    hashed with SHA256, and sent to the user's email.
+    """
     password_hash: Optional[str] = Field(None, max_length=500)
 
 class UserUpdate(BaseModel):

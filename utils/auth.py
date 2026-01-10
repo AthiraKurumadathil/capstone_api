@@ -16,9 +16,26 @@ security = HTTPBearer()
 PUBLIC_ROUTES = {
     "/health",
     "/users/authenticate/login",
+    "/users/forgot-password",
     "/docs",
     "/openapi.json",
-    "/redoc"
+    "/redoc",
+    # Add all API endpoints below for development/testing
+    # Remove these when going to production and implement proper JWT validation
+    "/organizations",
+    "/activities",
+    "/trainers",
+    "/activitytrainers",
+    "/attendance",
+    "/enrollments",
+    "/students",
+    "/batches",
+    "/batchsessions",
+    "/categories",
+    "/feeplans",
+    "/invoices",
+    "/payments",
+    "/roles"
 }
 
 class JWTMiddleware(BaseHTTPMiddleware):
@@ -31,6 +48,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
         
         # Skip authentication for public routes
         if request.url.path in PUBLIC_ROUTES or request.url.path.startswith("/api/docs"):
+            return await call_next(request)
+        
+        # Allow change-password endpoint without authentication
+        if request.url.path.startswith("/users/change-password/") and request.method == "PUT":
             return await call_next(request)
         
         # Get the authorization header

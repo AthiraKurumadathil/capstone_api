@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from model.usermodel import User, UserCreate, UserUpdate
 from services.usercrud import UserCRUD
+from utils.validation_helper import ValidationHelper
 import jwt
 from datetime import datetime, timedelta
 from typing import Optional
@@ -14,8 +15,33 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # ============== REQUEST/RESPONSE MODELS ==============
 class LoginRequest(BaseModel):
-    email: str = Field(..., min_length=1, max_length=150)
-    password: str = Field(..., min_length=1)
+    email: str = Field(..., min_length=1, max_length=150, description="Email address")
+    password: str = Field(..., min_length=1, description="Password")
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        """Validate email format"""
+        is_valid, error_msg = ValidationHelper.is_valid_email(v)
+        if not is_valid:
+            raise ValueError(error_msg)
+        return v
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=1, description="Current password")
+    new_password: str = Field(..., min_length=8, description="New password (minimum 8 characters)")
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=1, max_length=150, description="Email address")
+    
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        """Validate email format"""
+        is_valid, error_msg = ValidationHelper.is_valid_email(v)
+        if not is_valid:
+            raise ValueError(error_msg)
+        return v
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -30,14 +56,16 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate):
     """
-    Create a new user. Requires JWT authentication.
+    Create a new user with auto-generated password.
     
     - **org_id**: Organization ID (required)
     - **role_id**: Role ID (required)
     - **email**: Email address (required)
     - **phone**: Phone number (optional)
-    - **password_hash**: Hashed password (optional)
     - **active**: User status (required)
+    
+    A random 12-character password will be generated, hashed with SHA256, 
+    and sent to the user's email. User must change password on first login.
     """
     try:
         result = UserCRUD.create_user(user)
@@ -142,6 +170,56 @@ async def delete_user(user_id: int):
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============== FORGOT PASSWORD ENDPOINT ==============
+@router.post("/forgot-password", response_model=dict)
+async def forgot_password(request: ForgotPasswordRequest):
+    """
+    Forgot password - send temporary password to email.
+    
+    Validates that the email exists in the user table before sending reset email.
+    
+    - **email**: User email address (required)
+    
+    A temporary password will be generated and sent to the email address.
+    User can then use this password to log in and change it immediately.
+    """
+    try:
+        # Check if email exists in the user table
+        if not UserCRUD.email_exists(request.email):
+            raise HTTPException(
+                status_code=404,
+                detail="User with this email address not found"
+            )
+        
+        result = UserCRUD.forgot_password(request.email)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ============== CHANGE PASSWORD ENDPOINT ==============
+@router.put("/change-password/{email}", response_model=dict)
+async def change_password(email: str, change_password_data: ChangePasswordRequest):
+    """
+    Change user password using email. Requires correct old password.
+    
+    - **email**: User email address (required in URL)
+    - **old_password**: Current password in plain text (required)
+    - **new_password**: New password in plain text (minimum 8 characters) (required)
+    """
+    try:
+        result = UserCRUD.change_password(email, change_password_data.old_password, change_password_data.new_password)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        if "incorrect" in str(e).lower() or "invalid" in str(e).lower():
+            raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 # ============== AUTHENTICATION ENDPOINT ==============
 @router.post("/authenticate/login", response_model=TokenResponse)
