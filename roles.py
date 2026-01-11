@@ -11,7 +11,6 @@ async def create_role(role: RoleCreate):
     """
     Create a new role.
     
-    - **org_id**: Organization ID (required)
     - **name**: Role name (required)
     """
     try:
@@ -21,17 +20,6 @@ async def create_role(role: RoleCreate):
         raise HTTPException(status_code=400, detail=str(e))
 
 # ============== GET ENDPOINTS ==============
-@router.get("/organization/{org_id}", response_model=List[Role])
-async def get_roles_by_organization(org_id: int):
-    """
-    Retrieve all roles for a specific organization.
-    """
-    try:
-        roles = RoleCRUD.get_roles_by_org(org_id)
-        return roles
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("", response_model=List[Role])
 async def get_all_roles():
     """

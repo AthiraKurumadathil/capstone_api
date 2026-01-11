@@ -12,12 +12,11 @@ class RoleCRUD:
         try:
             query = """
             INSERT INTO [dbo].[Roles] 
-            (org_id, name)
-            VALUES (?, ?)
+            (name)
+            VALUES (?)
             """
             cursor.execute(query, (
-                role_data.org_id,
-                role_data.name
+                role_data.name,
             ))
             conn.commit()
             
@@ -41,15 +40,14 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, org_id, name FROM [dbo].[Roles] WHERE role_id = ?"
+            query = "SELECT role_id, name FROM [dbo].[Roles] WHERE role_id = ?"
             cursor.execute(query, (role_id,))
             row = cursor.fetchone()
             
             if row:
                 return {
                     "role_id": row[0],
-                    "org_id": row[1],
-                    "name": row[2]
+                    "name": row[1]
                 }
             return None
         
@@ -66,7 +64,7 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, org_id, name FROM [dbo].[Roles]"
+            query = "SELECT role_id, name FROM [dbo].[Roles] WHERE role_id != 1"
             cursor.execute(query)
             rows = cursor.fetchall()
             
@@ -74,8 +72,7 @@ class RoleCRUD:
             for row in rows:
                 roles.append({
                     "role_id": row[0],
-                    "org_id": row[1],
-                    "name": row[2]
+                    "name": row[1]
                 })
             return roles
         
@@ -87,21 +84,20 @@ class RoleCRUD:
 
     @staticmethod
     def get_roles_by_org(org_id: int):
-        """Retrieve all roles for a specific organization"""
+        """Retrieve all roles"""
         conn = get_db_connection()
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, org_id, name FROM [dbo].[Roles] WHERE org_id = ?"
-            cursor.execute(query, (org_id,))
+            query = "SELECT role_id, name FROM [dbo].[Roles]"
+            cursor.execute(query)
             rows = cursor.fetchall()
             
             roles = []
             for row in rows:
                 roles.append({
                     "role_id": row[0],
-                    "org_id": row[1],
-                    "name": row[2]
+                    "name": row[1]
                 })
             return roles
         
@@ -122,9 +118,6 @@ class RoleCRUD:
             update_fields = []
             values = []
             
-            if role_data.org_id is not None:
-                update_fields.append("org_id = ?")
-                values.append(role_data.org_id)
             if role_data.name is not None:
                 update_fields.append("name = ?")
                 values.append(role_data.name)

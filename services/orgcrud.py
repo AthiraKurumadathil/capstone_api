@@ -75,7 +75,7 @@ class OrganizationCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT [org_id],[name],[address],[city],[zip],[state],[phone],[email],[active], [created_date] FROM [dbo].[Organizations] ORDER BY org_id"
+            query = "SELECT [org_id],[name],[address],[city],[zip],[state],[phone],[email],[active], [created_date] FROM [dbo].[Organizations] WHERE org_id != 1 ORDER BY org_id"
             cursor.execute(query)
             rows = cursor.fetchall()
             
