@@ -49,7 +49,7 @@ class UserCRUD:
             try:
                 email_helper = EmailHelper()
                 base_app_url = os.getenv("BASE_APP_URL", "http://localhost:3000")
-                change_password_link = f"{base_app_url}/users/change-password"
+                change_password_link = f"{base_app_url}/users/change-password?email={user_data.email}"
                 
                 html_body = f"""
                 <html>
@@ -137,14 +137,17 @@ class UserCRUD:
 
     @staticmethod
     def get_all_users():
-        """Retrieve all users"""
+        """Retrieve all users with organization and role names"""
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             
             query = """
-            SELECT user_id, org_id, role_id, email, phone, password_hash, active, created_at, last_login_at
-            FROM [dbo].[Users]
+            SELECT u.user_id, u.org_id, u.role_id, u.email, u.phone, u.password_hash, u.active, u.created_at, u.last_login_at,
+                   o.name as organization_name, r.name as role_name
+            FROM [dbo].[Users] u
+            LEFT JOIN [dbo].[Organizations] o ON u.org_id = o.org_id
+            LEFT JOIN [dbo].[Roles] r ON u.role_id = r.role_id
             """
             cursor.execute(query)
             rows = cursor.fetchall()
@@ -160,7 +163,9 @@ class UserCRUD:
                     "password_hash": row[5],
                     "active": row[6],
                     "created_at": row[7],
-                    "last_login_at": row[8]
+                    "last_login_at": row[8],
+                    "organization_name": row[9],
+                    "role_name": row[10]
                 })
             return users
         except Exception as e:
@@ -375,10 +380,17 @@ class UserCRUD:
             
             # Verify password using PasswordHelper
             if PasswordHelper.verify_password(password, row[5]):  # row[5] is password_hash
+                # Fetch role name
+                role_query = "SELECT name FROM [dbo].[Roles] WHERE role_id = ?"
+                cursor.execute(role_query, (row[2],))  # row[2] is role_id
+                role_row = cursor.fetchone()
+                role_name = role_row[0] if role_row else None
+                
                 return {
                     "user_id": row[0],
                     "org_id": row[1],
                     "role_id": row[2],
+                    "role_name": role_name,
                     "email": row[3],
                     "phone": row[4],
                     "active": row[6],
@@ -516,7 +528,7 @@ class UserCRUD:
             try:
                 email_helper = EmailHelper()
                 base_app_url = os.getenv("BASE_APP_URL", "http://localhost:3000")
-                change_password_link = f"{base_app_url}/users/change-password"
+                change_password_link = f"{base_app_url}/users/change-password?email={email}"
                 
                 html_body = f"""
                 <html>

@@ -29,5 +29,7 @@ class User(UserBase):
     user_id: int
     created_at: datetime
     last_login_at: Optional[datetime] = None
+    organization_name: Optional[str] = None
+    role_name: Optional[str] = None
     class Config:
         from_attributes = True

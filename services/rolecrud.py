@@ -10,13 +10,20 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
+            # Check if role with same name exists for this organization
+            check_query = "SELECT role_id FROM [dbo].[Roles] WHERE org_id = ? AND name = ?"
+            cursor.execute(check_query, (role_data.org_id, role_data.name))
+            if cursor.fetchone():
+                raise Exception(f"Role with name '{role_data.name}' already exists for this organization")
+            
             query = """
             INSERT INTO [dbo].[Roles] 
-            (name)
-            VALUES (?)
+            (org_id, name)
+            VALUES (?, ?)
             """
             cursor.execute(query, (
-                role_data.name,
+                role_data.org_id,
+                role_data.name
             ))
             conn.commit()
             
@@ -40,14 +47,15 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, name FROM [dbo].[Roles] WHERE role_id = ?"
+            query = "SELECT role_id, org_id, name FROM [dbo].[Roles] WHERE role_id = ?"
             cursor.execute(query, (role_id,))
             row = cursor.fetchone()
             
             if row:
                 return {
                     "role_id": row[0],
-                    "name": row[1]
+                    "org_id": row[1],
+                    "name": row[2]
                 }
             return None
         
@@ -64,7 +72,7 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, name FROM [dbo].[Roles] WHERE role_id != 1"
+            query = "SELECT role_id, org_id, name FROM [dbo].[Roles] WHERE role_id != 1"
             cursor.execute(query)
             rows = cursor.fetchall()
             
@@ -72,7 +80,8 @@ class RoleCRUD:
             for row in rows:
                 roles.append({
                     "role_id": row[0],
-                    "name": row[1]
+                    "org_id": row[1],
+                    "name": row[2]
                 })
             return roles
         
@@ -84,20 +93,21 @@ class RoleCRUD:
 
     @staticmethod
     def get_roles_by_org(org_id: int):
-        """Retrieve all roles"""
+        """Retrieve all roles for a specific organization"""
         conn = get_db_connection()
         cursor = conn.cursor()
         
         try:
-            query = "SELECT role_id, name FROM [dbo].[Roles]"
-            cursor.execute(query)
+            query = "SELECT role_id, org_id, name FROM [dbo].[Roles] WHERE org_id = ?"
+            cursor.execute(query, (org_id,))
             rows = cursor.fetchall()
             
             roles = []
             for row in rows:
                 roles.append({
                     "role_id": row[0],
-                    "name": row[1]
+                    "org_id": row[1],
+                    "name": row[2]
                 })
             return roles
         
@@ -114,10 +124,35 @@ class RoleCRUD:
         cursor = conn.cursor()
         
         try:
+            # Get current role data
+            get_role_query = "SELECT org_id, name FROM [dbo].[Roles] WHERE role_id = ?"
+            cursor.execute(get_role_query, (role_id,))
+            current_role = cursor.fetchone()
+            
+            if not current_role:
+                raise Exception("Role not found")
+            
+            current_org_id = current_role[0]
+            current_name = current_role[1]
+            
+            # Determine the org_id and name to use for duplicate check
+            org_id_to_check = role_data.org_id if role_data.org_id is not None else current_org_id
+            name_to_check = role_data.name if role_data.name is not None else current_name
+            
+            # Check if another role with same name exists for this organization
+            if role_data.name is not None:  # Only check if name is being updated
+                check_query = "SELECT role_id FROM [dbo].[Roles] WHERE org_id = ? AND name = ? AND role_id != ?"
+                cursor.execute(check_query, (org_id_to_check, name_to_check, role_id))
+                if cursor.fetchone():
+                    raise Exception(f"Role with name '{name_to_check}' already exists for this organization")
+            
             # Build dynamic update query based on provided fields
             update_fields = []
             values = []
             
+            if role_data.org_id is not None:
+                update_fields.append("org_id = ?")
+                values.append(role_data.org_id)
             if role_data.name is not None:
                 update_fields.append("name = ?")
                 values.append(role_data.name)

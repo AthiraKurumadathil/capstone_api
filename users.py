@@ -247,6 +247,7 @@ async def authenticate_user(login_data: LoginRequest):
             "email": user['email'],
             "org_id": user['org_id'],
             "role_id": user['role_id'],
+            "role_name": user.get('role_name'),
             "exp": expiration_time,
             "iat": datetime.utcnow()
         }
