@@ -12,13 +12,13 @@ class FeePlanCRUD:
         try:
             query = """
             INSERT INTO [dbo].[FeePlans] 
-            (org_id, name, billing_type, amount, currency, active)
+            (org_id, name, billing_type_id, amount, currency, active)
             VALUES (?, ?, ?, ?, ?, ?)
             """
             cursor.execute(query, (
                 fee_plan_data.org_id,
                 fee_plan_data.name,
-                fee_plan_data.billing_type,
+                fee_plan_data.billing_type_id,
                 fee_plan_data.amount,
                 fee_plan_data.currency,
                 fee_plan_data.active
@@ -45,7 +45,7 @@ class FeePlanCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT fee_plan_id, org_id, name, billing_type, amount, currency, active FROM [dbo].[FeePlans] WHERE fee_plan_id = ?"
+            query = "SELECT fee_plan_id, org_id, name, billing_type_id, amount, currency, active FROM [dbo].[FeePlans] WHERE fee_plan_id = ?"
             cursor.execute(query, (fee_plan_id,))
             row = cursor.fetchone()
             
@@ -54,7 +54,7 @@ class FeePlanCRUD:
                     "fee_plan_id": row[0],
                     "org_id": row[1],
                     "name": row[2],
-                    "billing_type": row[3],
+                    "billing_type_id": row[3],
                     "amount": row[4],
                     "currency": row[5],
                     "active": row[6]
@@ -74,7 +74,7 @@ class FeePlanCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT fee_plan_id, org_id, name, billing_type, amount, currency, active FROM [dbo].[FeePlans]"
+            query = "SELECT fee_plan_id, org_id, name, billing_type_id, amount, currency, active FROM [dbo].[FeePlans]"
             cursor.execute(query)
             rows = cursor.fetchall()
             
@@ -84,7 +84,7 @@ class FeePlanCRUD:
                     "fee_plan_id": row[0],
                     "org_id": row[1],
                     "name": row[2],
-                    "billing_type": row[3],
+                    "billing_type_id": row[3],
                     "amount": row[4],
                     "currency": row[5],
                     "active": row[6]
@@ -104,7 +104,7 @@ class FeePlanCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT fee_plan_id, org_id, name, billing_type, amount, currency, active FROM [dbo].[FeePlans] WHERE org_id = ?"
+            query = "SELECT fee_plan_id, org_id, name, billing_type_id, amount, currency, active FROM [dbo].[FeePlans] WHERE org_id = ?"
             cursor.execute(query, (org_id,))
             rows = cursor.fetchall()
             
@@ -114,7 +114,7 @@ class FeePlanCRUD:
                     "fee_plan_id": row[0],
                     "org_id": row[1],
                     "name": row[2],
-                    "billing_type": row[3],
+                    "billing_type_id": row[3],
                     "amount": row[4],
                     "currency": row[5],
                     "active": row[6]
@@ -144,9 +144,9 @@ class FeePlanCRUD:
             if fee_plan_data.name is not None:
                 update_fields.append("name = ?")
                 values.append(fee_plan_data.name)
-            if fee_plan_data.billing_type is not None:
-                update_fields.append("billing_type = ?")
-                values.append(fee_plan_data.billing_type)
+            if fee_plan_data.billing_type_id is not None:
+                update_fields.append("billing_type_id = ?")
+                values.append(fee_plan_data.billing_type_id)
             if fee_plan_data.amount is not None:
                 update_fields.append("amount = ?")
                 values.append(fee_plan_data.amount)

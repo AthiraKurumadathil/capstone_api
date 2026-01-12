@@ -13,7 +13,7 @@ async def create_fee_plan(fee_plan: FeePlanCreate):
     
     - **org_id**: Organization ID (required)
     - **name**: Fee plan name (required)
-    - **billing_type**: Billing type (required)
+    - **billing_type_id**: Billing type ID (required)
     - **amount**: Fee amount (required)
     - **currency**: Currency code (3 chars, required)
     - **active**: Active status (default: true)

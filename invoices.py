@@ -73,6 +73,28 @@ async def get_invoice(invoice_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/amount/{enrollment_id}", response_model=dict)
+async def get_invoice_amount_by_enrollment(enrollment_id: int):
+    """
+    Retrieve the invoice amount for an enrollment by joining:
+    Enrollments -> Batches -> FeePlans
+    
+    - **enrollment_id**: Enrollment ID (required)
+    
+    Returns:
+    - **enrollment_id**: The enrollment ID
+    - **amount**: The fee plan amount associated with the enrollment's batch
+    """
+    try:
+        result = InvoiceCRUD.get_invoice_amount_by_enrollment(enrollment_id)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"No invoice amount found for enrollment {enrollment_id}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============== UPDATE ENDPOINT ==============
 @router.put("/{invoice_id}", response_model=dict)
 async def update_invoice(invoice_id: int, invoice: InvoiceUpdate):

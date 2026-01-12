@@ -230,3 +230,32 @@ class InvoiceCRUD:
         finally:
             cursor.close()
             conn.close()
+    @staticmethod
+    def get_invoice_amount_by_enrollment(enrollment_id: int):
+        """Retrieve the fee plan amount for an enrollment by joining enrollments -> batches -> feeplans"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            query = """
+            SELECT fp.amount 
+            FROM [dbo].[Enrollments] e
+            INNER JOIN [dbo].[Batches] b ON e.batch_id = b.batch_id
+            INNER JOIN [dbo].[FeePlans] fp ON b.fee_plan_id = fp.fee_plan_id
+            WHERE e.enrollment_id = ?
+            """
+            cursor.execute(query, (enrollment_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                return {
+                    "enrollment_id": enrollment_id,
+                    "amount": float(row[0])
+                }
+            return None
+        
+        except Exception as e:
+            raise Exception(f"Error retrieving invoice amount: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
