@@ -1,11 +1,13 @@
 from utils.database import get_db_connection
 from model.enrollmentmodel import EnrollmentCreate, EnrollmentUpdate
+from utils.email_helper import EmailHelper
+import os
 
 class EnrollmentCRUD:
     
     @staticmethod
     def create_enrollment(enrollment_data: EnrollmentCreate):
-        """Insert a new enrollment record into the database"""
+        """Insert a new enrollment record into the database and send email to guardian"""
         conn = get_db_connection()
         cursor = conn.cursor()
         
@@ -27,6 +29,53 @@ class EnrollmentCRUD:
             # Get the inserted enrollment_id
             cursor.execute("SELECT @@IDENTITY")
             enrollment_id = cursor.fetchone()[0]
+            
+            # Fetch student details including guardian email
+            student_query = """
+            SELECT first_name, last_name, guardian_name, guardian_email 
+            FROM [dbo].[Students] 
+            WHERE student_id = ?
+            """
+            cursor.execute(student_query, (enrollment_data.student_id,))
+            student_row = cursor.fetchone()
+            
+            # Send email to guardian if guardian_email exists
+            if student_row and student_row[3]:  # student_row[3] is guardian_email
+                try:
+                    student_first_name = student_row[0]
+                    student_last_name = student_row[1]
+                    guardian_name = student_row[2]
+                    guardian_email = student_row[3]
+                    
+                    email_helper = EmailHelper()
+                    
+                    html_body = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif;">
+                            <h2>Enrollment Confirmation</h2>
+                            <p>Dear {guardian_name},</p>
+                            <p>We are pleased to confirm that your ward <strong>{student_first_name} {student_last_name}</strong> has been successfully enrolled in our program.</p>
+                            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                                <p><strong>Enrollment Details:</strong></p>
+                                <p><strong>Enrollment ID:</strong> <code style="background-color: #e0e0e0; padding: 5px;">{enrollment_id}</code></p>
+                                <p><strong>Student Name:</strong> {student_first_name} {student_last_name}</p>
+                                <p><strong>Enrollment Date:</strong> {enrollment_data.enrolled_on}</p>
+                            </div>
+                            <p>Please keep this Enrollment ID for your records as it may be required for future reference.</p>
+                            <p>If you have any questions regarding the enrollment, please do not hesitate to contact us.</p>
+                            <p>Best regards,<br>System Administration Team</p>
+                        </body>
+                    </html>
+                    """
+                    
+                    email_helper.send_html_email(
+                        recipient_email=guardian_email,
+                        subject=f"Enrollment Confirmation - {student_first_name} {student_last_name}",
+                        html_body=html_body
+                    )
+                except Exception as email_error:
+                    # Log email error but don't fail enrollment creation
+                    print(f"Warning: Could not send enrollment email to {guardian_email}: {str(email_error)}")
             
             return {"enrollment_id": enrollment_id, **enrollment_data.dict()}
         

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, status
-from typing import List
+from fastapi import APIRouter, HTTPException, status, File, UploadFile, Form
+from typing import List, Optional
 from model.studentmodel import Student, StudentCreate, StudentUpdate
 from services.studentcrud import StudentCRUD
 
@@ -7,9 +7,20 @@ router = APIRouter(prefix="/students", tags=["students"])
 
 # ============== CREATE ENDPOINT ==============
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_student(student: StudentCreate):
+async def create_student(
+    org_id: int = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    dob: Optional[str] = Form(None),
+    guardian_name: Optional[str] = Form(None),
+    guardian_phone: Optional[str] = Form(None),
+    guardian_email: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None),
+    active: Optional[bool] = Form(True),
+    student_photo: Optional[UploadFile] = File(None)
+):
     """
-    Create a new student.
+    Create a new student with optional photo upload.
     
     - **org_id**: Organization ID (required)
     - **first_name**: First name (required)
@@ -20,9 +31,21 @@ async def create_student(student: StudentCreate):
     - **guardian_email**: Guardian email (optional)
     - **notes**: Additional notes (optional)
     - **active**: Active status (default: true)
+    - **student_photo**: Student photo file (optional)
     """
     try:
-        result = StudentCRUD.create_student(student)
+        result = StudentCRUD.create_student_with_photo(
+            org_id=org_id,
+            first_name=first_name,
+            last_name=last_name,
+            dob=dob,
+            guardian_name=guardian_name,
+            guardian_phone=guardian_phone,
+            guardian_email=guardian_email,
+            notes=notes,
+            active=active,
+            student_photo=student_photo
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

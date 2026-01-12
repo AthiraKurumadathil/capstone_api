@@ -12,6 +12,7 @@ async def create_attendance(attendance: AttendanceCreate):
     Create a new attendance record.
     
     - **session_id**: Session ID (required)
+    - **session_name**: Session name (required)
     - **enrollment_id**: Enrollment ID (required)
     - **status**: Attendance status (required)
     - **marked_at**: Timestamp when marked (required)

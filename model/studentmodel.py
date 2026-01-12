@@ -10,6 +10,7 @@ class StudentBase(BaseModel):
     guardian_name: Optional[str] = Field(None, max_length=150, description="Guardian name")
     guardian_phone: Optional[str] = Field(None, max_length=20, description="Guardian phone")
     guardian_email: Optional[str] = Field(None, max_length=150, description="Guardian email")
+    student_photo_path: Optional[str] = Field(None, max_length=500, description="Student photo path")
     notes: Optional[str] = Field(None, description="Additional notes")
     active: Optional[bool] = Field(True, description="Active status")
 
@@ -24,6 +25,7 @@ class StudentUpdate(BaseModel):
     guardian_name: Optional[str] = Field(None, max_length=150)
     guardian_phone: Optional[str] = Field(None, max_length=20)
     guardian_email: Optional[str] = Field(None, max_length=150)
+    student_photo_path: Optional[str] = Field(None, max_length=500)
     notes: Optional[str] = None
     active: Optional[bool] = None
 

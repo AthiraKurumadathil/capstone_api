@@ -4,6 +4,24 @@ from model.batchsessionmodel import BatchSessionCreate, BatchSessionUpdate
 class BatchSessionCRUD:
     
     @staticmethod
+    def session_name_exists(batch_id: int, session_name: str):
+        """Check if a session with the same name exists for a batch"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            query = "SELECT COUNT(*) FROM [dbo].[BatchSessions] WHERE batch_id = ? AND session_name = ?"
+            cursor.execute(query, (batch_id, session_name))
+            result = cursor.fetchone()[0]
+            return result > 0
+        
+        except Exception as e:
+            raise Exception(f"Error checking session name: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
+    
+    @staticmethod
     def create_batch_session(batch_session_data: BatchSessionCreate):
         """Insert a new batch session into the database"""
         conn = get_db_connection()
@@ -12,11 +30,12 @@ class BatchSessionCRUD:
         try:
             query = """
             INSERT INTO [dbo].[BatchSessions] 
-            (batch_id, session_date, start_time, end_time, status, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (batch_id, session_name, session_date, start_time, end_time, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(query, (
                 batch_session_data.batch_id,
+                batch_session_data.session_name,
                 batch_session_data.session_date,
                 batch_session_data.start_time,
                 batch_session_data.end_time,
@@ -45,7 +64,7 @@ class BatchSessionCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT session_id, batch_id, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions] WHERE session_id = ?"
+            query = "SELECT session_id, batch_id, session_name, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions] WHERE session_id = ?"
             cursor.execute(query, (session_id,))
             row = cursor.fetchone()
             
@@ -53,11 +72,12 @@ class BatchSessionCRUD:
                 return {
                     "session_id": row[0],
                     "batch_id": row[1],
-                    "session_date": row[2],
-                    "start_time": row[3],
-                    "end_time": row[4],
-                    "status": row[5],
-                    "notes": row[6]
+                    "session_name": row[2],
+                    "session_date": row[3],
+                    "start_time": row[4],
+                    "end_time": row[5],
+                    "status": row[6],
+                    "notes": row[7]
                 }
             return None
         
@@ -74,7 +94,7 @@ class BatchSessionCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT session_id, batch_id, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions]"
+            query = "SELECT session_id, batch_id, session_name, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions]"
             cursor.execute(query)
             rows = cursor.fetchall()
             
@@ -83,11 +103,12 @@ class BatchSessionCRUD:
                 batch_sessions.append({
                     "session_id": row[0],
                     "batch_id": row[1],
-                    "session_date": row[2],
-                    "start_time": row[3],
-                    "end_time": row[4],
-                    "status": row[5],
-                    "notes": row[6]
+                    "session_name": row[2],
+                    "session_date": row[3],
+                    "start_time": row[4],
+                    "end_time": row[5],
+                    "status": row[6],
+                    "notes": row[7]
                 })
             return batch_sessions
         
@@ -104,7 +125,7 @@ class BatchSessionCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT session_id, batch_id, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions] WHERE batch_id = ?"
+            query = "SELECT session_id, batch_id, session_name, session_date, start_time, end_time, status, notes FROM [dbo].[BatchSessions] WHERE batch_id = ?"
             cursor.execute(query, (batch_id,))
             rows = cursor.fetchall()
             
@@ -113,11 +134,12 @@ class BatchSessionCRUD:
                 batch_sessions.append({
                     "session_id": row[0],
                     "batch_id": row[1],
-                    "session_date": row[2],
-                    "start_time": row[3],
-                    "end_time": row[4],
-                    "status": row[5],
-                    "notes": row[6]
+                    "session_name": row[2],
+                    "session_date": row[3],
+                    "start_time": row[4],
+                    "end_time": row[5],
+                    "status": row[6],
+                    "notes": row[7]
                 })
             return batch_sessions
         
@@ -141,6 +163,9 @@ class BatchSessionCRUD:
             if batch_session_data.batch_id is not None:
                 update_fields.append("batch_id = ?")
                 values.append(batch_session_data.batch_id)
+            if batch_session_data.session_name is not None:
+                update_fields.append("session_name = ?")
+                values.append(batch_session_data.session_name)
             if batch_session_data.session_date is not None:
                 update_fields.append("session_date = ?")
                 values.append(batch_session_data.session_date)

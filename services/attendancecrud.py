@@ -10,6 +10,14 @@ class AttendanceCRUD:
         cursor = conn.cursor()
         
         try:
+            # Check if attendance already exists for this session and enrollment
+            check_query = "SELECT COUNT(*) FROM [dbo].[Attendance] WHERE session_id = ? AND enrollment_id = ?"
+            cursor.execute(check_query, (attendance_data.session_id, attendance_data.enrollment_id))
+            exists = cursor.fetchone()[0]
+            
+            if exists > 0:
+                raise Exception(f"Attendance already exists for session {attendance_data.session_id} and enrollment {attendance_data.enrollment_id}")
+            
             query = """
             INSERT INTO [dbo].[Attendance] 
             (session_id, enrollment_id, status, marked_at, marked_by)
@@ -44,7 +52,10 @@ class AttendanceCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT attendance_id, session_id, enrollment_id, status, marked_at, marked_by FROM [dbo].[Attendance] WHERE attendance_id = ?"
+            query = """SELECT a.attendance_id, a.session_id, bs.session_name, a.enrollment_id, a.status, a.marked_at, a.marked_by 
+            FROM [dbo].[Attendance] a 
+            LEFT JOIN [dbo].[BatchSessions] bs ON a.session_id = bs.session_id 
+            WHERE a.attendance_id = ?"""
             cursor.execute(query, (attendance_id,))
             row = cursor.fetchone()
             
@@ -52,10 +63,11 @@ class AttendanceCRUD:
                 return {
                     "attendance_id": row[0],
                     "session_id": row[1],
-                    "enrollment_id": row[2],
-                    "status": row[3],
-                    "marked_at": row[4],
-                    "marked_by": row[5]
+                    "session_name": row[2],
+                    "enrollment_id": row[3],
+                    "status": row[4],
+                    "marked_at": row[5],
+                    "marked_by": row[6]
                 }
             return None
         
@@ -72,7 +84,9 @@ class AttendanceCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT attendance_id, session_id, enrollment_id, status, marked_at, marked_by FROM [dbo].[Attendance]"
+            query = """SELECT a.attendance_id, a.session_id, bs.session_name, a.enrollment_id, a.status, a.marked_at, a.marked_by 
+            FROM [dbo].[Attendance] a 
+            LEFT JOIN [dbo].[BatchSessions] bs ON a.session_id = bs.session_id"""
             cursor.execute(query)
             rows = cursor.fetchall()
             
@@ -81,10 +95,11 @@ class AttendanceCRUD:
                 attendance_records.append({
                     "attendance_id": row[0],
                     "session_id": row[1],
-                    "enrollment_id": row[2],
-                    "status": row[3],
-                    "marked_at": row[4],
-                    "marked_by": row[5]
+                    "session_name": row[2],
+                    "enrollment_id": row[3],
+                    "status": row[4],
+                    "marked_at": row[5],
+                    "marked_by": row[6]
                 })
             return attendance_records
         
@@ -101,7 +116,10 @@ class AttendanceCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT attendance_id, session_id, enrollment_id, status, marked_at, marked_by FROM [dbo].[Attendance] WHERE session_id = ?"
+            query = """SELECT a.attendance_id, a.session_id, bs.session_name, a.enrollment_id, a.status, a.marked_at, a.marked_by 
+            FROM [dbo].[Attendance] a 
+            LEFT JOIN [dbo].[BatchSessions] bs ON a.session_id = bs.session_id 
+            WHERE a.session_id = ?"""
             cursor.execute(query, (session_id,))
             rows = cursor.fetchall()
             
@@ -110,10 +128,11 @@ class AttendanceCRUD:
                 attendance_records.append({
                     "attendance_id": row[0],
                     "session_id": row[1],
-                    "enrollment_id": row[2],
-                    "status": row[3],
-                    "marked_at": row[4],
-                    "marked_by": row[5]
+                    "session_name": row[2],
+                    "enrollment_id": row[3],
+                    "status": row[4],
+                    "marked_at": row[5],
+                    "marked_by": row[6]
                 })
             return attendance_records
         
@@ -130,7 +149,10 @@ class AttendanceCRUD:
         cursor = conn.cursor()
         
         try:
-            query = "SELECT attendance_id, session_id, enrollment_id, status, marked_at, marked_by FROM [dbo].[Attendance] WHERE enrollment_id = ?"
+            query = """SELECT a.attendance_id, a.session_id, bs.session_name, a.enrollment_id, a.status, a.marked_at, a.marked_by 
+            FROM [dbo].[Attendance] a 
+            LEFT JOIN [dbo].[BatchSessions] bs ON a.session_id = bs.session_id 
+            WHERE a.enrollment_id = ?"""
             cursor.execute(query, (enrollment_id,))
             rows = cursor.fetchall()
             
@@ -139,10 +161,11 @@ class AttendanceCRUD:
                 attendance_records.append({
                     "attendance_id": row[0],
                     "session_id": row[1],
-                    "enrollment_id": row[2],
-                    "status": row[3],
-                    "marked_at": row[4],
-                    "marked_by": row[5]
+                    "session_name": row[2],
+                    "enrollment_id": row[3],
+                    "status": row[4],
+                    "marked_at": row[5],
+                    "marked_by": row[6]
                 })
             return attendance_records
         

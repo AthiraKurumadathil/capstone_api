@@ -12,6 +12,7 @@ async def create_batch_session(session: BatchSessionCreate):
     Create a new batch session.
     
     - **batch_id**: Batch ID (required)
+    - **session_name**: Session name (required)
     - **session_date**: Session date (required)
     - **start_time**: Start time (required)
     - **end_time**: End time (required)
@@ -19,8 +20,17 @@ async def create_batch_session(session: BatchSessionCreate):
     - **notes**: Session notes (optional)
     """
     try:
+        # Check if session name already exists for this batch
+        if BatchSessionCRUD.session_name_exists(session.batch_id, session.session_name):
+            raise HTTPException(
+                status_code=409,
+                detail=f"A session with name '{session.session_name}' already exists for this batch"
+            )
+        
         result = BatchSessionCRUD.create_batch_session(session)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

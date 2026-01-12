@@ -21,6 +21,8 @@ class AttendanceUpdate(BaseModel):
 
 class Attendance(AttendanceBase):
     attendance_id: int
+    session_name: Optional[str] = Field(None, description="Session name (from BatchSessions)")
 
     class Config:
         from_attributes = True
+
