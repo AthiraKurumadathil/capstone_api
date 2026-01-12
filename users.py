@@ -71,7 +71,11 @@ async def create_user(user: UserCreate):
         result = UserCRUD.create_user(user)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        # Check if it's a duplicate email error
+        if "already registered" in error_msg:
+            raise HTTPException(status_code=409, detail=error_msg)
+        raise HTTPException(status_code=400, detail=error_msg)
 
 # ============== GET ENDPOINTS ==============
 @router.get("/organization/{org_id}", response_model=List[User])
