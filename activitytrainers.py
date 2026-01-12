@@ -23,6 +23,22 @@ async def create_activity_trainer(activity_trainer: ActivityTrainerCreate):
 
 # ============== GET ENDPOINTS ==============
 # Note: Specific routes must be defined before generic parameterized routes
+@router.get("/organization/{org_id}", response_model=List[ActivityTrainer])
+async def get_activity_trainers_by_organization(org_id: int):
+    """
+    Retrieve all trainers for activities in a specific organization.
+    
+    This endpoint joins ActivityTrainers with Activities table to get
+    all trainers assigned to activities that belong to the organization.
+    
+    - **org_id**: Organization ID (required)
+    """
+    try:
+        activity_trainers = ActivityTrainerCRUD.get_activity_trainers_by_org(org_id)
+        return activity_trainers
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/activity/{activity_id}", response_model=List[ActivityTrainer])
 async def get_trainers_by_activity(activity_id: int):
     """

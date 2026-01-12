@@ -192,3 +192,37 @@ class ActivityTrainerCRUD:
         finally:
             cursor.close()
             conn.close()
+    @staticmethod
+    def get_activity_trainers_by_org(org_id: int):
+        """Retrieve all activity trainers for a specific organization by joining ActivityTrainers with Activities"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            query = """
+            SELECT at.activity_id, at.trainer_id, at.role, t.first_name, t.last_name, a.name AS activity_name
+            FROM [dbo].[ActivityTrainers] at
+            INNER JOIN [dbo].[Activities] a ON at.activity_id = a.activity_id
+            INNER JOIN [dbo].[Trainers] t ON at.trainer_id = t.trainer_id
+            WHERE a.org_id = ?
+            """
+            cursor.execute(query, (org_id,))
+            rows = cursor.fetchall()
+            
+            activity_trainers = []
+            for row in rows:
+                activity_trainers.append({
+                    "activity_id": row[0],
+                    "trainer_id": row[1],
+                    "role": row[2],
+                    "trainer_first_name": row[3],
+                    "trainer_last_name": row[4],
+                    "activity_name": row[5]
+                })
+            return activity_trainers
+        
+        except Exception as e:
+            raise Exception(f"Error retrieving activity trainers for organization: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
